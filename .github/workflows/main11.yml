@@ -22,7 +22,7 @@ jobs:
         with:
           gradle-version: '8.5'
 
-      - name: Generate App Icon, Name & Build APK
+      - name: Upgrade Jelly UI, 3D Icon & Build APK
         run: |
           if [ -z "$(find . -name 'settings.gradle.kts' -print -quit)" ]; then
             ZIP_FILE=$(find . -name '*.zip' -print -quit)
@@ -36,18 +36,61 @@ jobs:
           echo "android.useAndroidX=true" > gradle.properties
 
           python3 - << 'PYEOF'
-          import math, pathlib, struct, zlib
+          import base64, math, pathlib, struct, zlib
 
           APP_NAME = "脉冲习惯"
 
-          def make_png(size, mode="squircle"):
+          HTML_B64 = """
+              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
+          """
+          assets_dir = pathlib.Path("app/src/main/assets")
+          assets_dir.mkdir(parents=True, exist_ok=True)
+          (assets_dir / "index.html").write_bytes(zlib.decompress(base64.b64decode(HTML_B64)))
+
+          def make_jelly_icon(size, mode="squircle"):
               pixels = bytearray(size * size * 4)
               cx, cy = (size - 1) / 2.0, (size - 1) / 2.0
-              scale = 0.72 if mode == "foreground" else 1.0
-              r_card = size * 0.46
-              r_outer = size * 0.34 * scale
-              r_inner = size * 0.255 * scale
-              stroke_w = size * 0.052 * scale
+              scale = 0.70 if mode == "foreground" else 1.0
+              badge_r = size * 0.36 * scale
+              stroke_w = size * 0.068 * scale
+
+              def smoothstep(e0, e1, x):
+                  t = max(0.0, min(1.0, (x - e0) / (e1 - e0)))
+                  return t * t * (3.0 - 2.0 * t)
 
               def dist_seg(px, py, x1, y1, x2, y2):
                   vx, vy = x2 - x1, y2 - y1
@@ -61,10 +104,6 @@ jobs:
                   b_val = c1 / c2
                   return math.hypot(px - (x1 + b_val * vx), py - (y1 + b_val * vy))
 
-              def smoothstep(e0, e1, x):
-                  t = max(0.0, min(1.0, (x - e0) / (e1 - e0)))
-                  return t * t * (3.0 - 2.0 * t)
-
               for y in range(size):
                   ny = y / float(size)
                   for x in range(size):
@@ -74,61 +113,100 @@ jobs:
 
                       if mode == "foreground":
                           r, g, b, base_a = 0.0, 0.0, 0.0, 0.0
-                          glow = max(0.0, 1.0 - dist / (size * 0.35))
-                          if glow > 0:
-                              r, g, b = 56.0, 189.0, 248.0
-                              base_a = (glow ** 2.2) * 0.35
                       else:
-                          if mode == "round":
-                              mask_a = 1.0 - smoothstep(r_card - 1.2, r_card + 0.8, dist)
+                          if mode == "background":
+                              mask_a = 1.0
+                              edge_d = max(abs(dx), abs(dy)) / (size * 0.5)
+                          elif mode == "round":
+                              mask_a = 1.0 - smoothstep(size*0.46 - 1.2, size*0.46 + 0.8, dist)
+                              edge_d = dist / (size * 0.46)
                           else:
-                              rx, ry = abs(dx) / (size * 0.44), abs(dy) / (size * 0.44)
-                              sq = (rx**4 + ry**4) ** 0.25
-                              mask_a = 1.0 - smoothstep(0.985, 1.015, sq)
+                              rx, ry = abs(dx) / (size * 0.445), abs(dy) / (size * 0.445)
+                              sq = (rx**3.6 + ry**3.6) ** (1.0 / 3.6)
+                              mask_a = 1.0 - smoothstep(0.98, 1.015, sq)
+                              edge_d = sq
                           if mask_a <= 0.0:
                               continue
-                          t = nx * 0.5 + ny * 0.5
-                          r = 13 * (1 - t) + 30 * t
-                          g = 19 * (1 - t) + 41 * t
-                          b = 38 * (1 - t) + 89 * t
-                          glow = max(0.0, 1.0 - dist / (size * 0.42))
-                          r += 42 * (glow ** 1.8)
-                          g += 105 * (glow ** 1.8)
-                          b += 165 * (glow ** 1.8)
+
+                          t = nx * 0.45 + ny * 0.55
+                          r = 99 * (1 - t) + 56 * t
+                          g = 102 * (1 - t) + 189 * t
+                          b = 241 * (1 - t) + 248 * t
+
+                          hx, hy = (nx - 0.34), (ny - 0.24)
+                          gloss = max(0.0, 1.0 - math.hypot(hx * 0.85, hy * 1.25) / 0.38) ** 2.2
+                          r += 110 * gloss
+                          g += 110 * gloss
+                          b += 95 * gloss
+
+                          bevel = smoothstep(0.82, 1.0, edge_d)
+                          r *= (1.0 - 0.28 * bevel)
+                          g *= (1.0 - 0.28 * bevel)
+                          b *= (1.0 - 0.22 * bevel)
                           base_a = mask_a
 
-                      ring_a = smoothstep(r_inner - 1.2, r_inner + 1.0, dist) * (1.0 - smoothstep(r_outer - 1.0, r_outer + 1.2, dist))
-                      if ring_a > 0:
-                          rr = 56 * (1 - ny) + 16 * ny
-                          rg = 189 * (1 - ny) + 185 * ny
-                          rb = 248 * (1 - ny) + 129 * ny
-                          if mode == "foreground":
-                              r, g, b = rr, rg, rb
-                              base_a = max(base_a, ring_a)
-                          else:
-                              r = r * (1 - ring_a) + rr * ring_a
-                              g = g * (1 - ring_a) + rg * ring_a
-                              b = b * (1 - ring_a) + rb * ring_a
+                      if mode != "background":
+                          sd_dist = math.hypot(dx, dy - size * 0.035 * scale)
+                          sh_a = (1.0 - smoothstep(badge_r * 0.85, badge_r * 1.18, sd_dist)) * 0.35
+                          if sh_a > 0 and mode != "foreground":
+                              r *= (1.0 - sh_a)
+                              g *= (1.0 - sh_a)
+                              b *= (1.0 - sh_a)
 
-                      p1x = cx + (0.35 - 0.5) * size * scale
-                      p1y = cy + (0.51 - 0.5) * size * scale
-                      p2x = cx + (0.455 - 0.5) * size * scale
-                      p2y = cy + (0.615 - 0.5) * size * scale
-                      p3x = cx + (0.655 - 0.5) * size * scale
-                      p3y = cy + (0.385 - 0.5) * size * scale
+                          orb_a = 1.0 - smoothstep(badge_r - 1.2, badge_r + 1.0, dist)
+                          if orb_a > 0:
+                              ox, oy = dx / badge_r, dy / badge_r
+                              oz = math.sqrt(max(0.0, 1.0 - ox*ox - oy*oy))
+                              or_c = 16 * (1 - ny) + 6 * ny
+                              og_c = 215 * (1 - ny) + 182 * ny
+                              ob_c = 150 * (1 - ny) + 212 * ny
+                              light = max(0.0, -0.38 * ox - 0.48 * oy + 0.79 * oz)
+                              spec = (light ** 7.0) * 0.65
+                              rim_dark = (1.0 - oz) ** 1.8 * 0.28
+                              or_c = or_c * (1.0 - rim_dark) + 255 * spec
+                              og_c = og_c * (1.0 - rim_dark) + 255 * spec
+                              ob_c = ob_c * (1.0 - rim_dark) + 255 * spec
+                              if mode == "foreground":
+                                  r, g, b, base_a = or_c, og_c, ob_c, orb_a
+                              else:
+                                  r = r * (1 - orb_a) + or_c * orb_a
+                                  g = g * (1 - orb_a) + og_c * orb_a
+                                  b = b * (1 - orb_a) + ob_c * orb_a
 
-                      d_check = min(dist_seg(x, y, p1x, p1y, p2x, p2y), dist_seg(x, y, p2x, p2y, p3x, p3y))
-                      check_a = 1.0 - smoothstep(stroke_w - 1.2, stroke_w + 1.0, d_check)
-                      if check_a > 0:
-                          if mode == "foreground":
-                              r = r * (1 - check_a) + 255 * check_a
-                              g = g * (1 - check_a) + 255 * check_a
-                              b = b * (1 - check_a) + 255 * check_a
-                              base_a = max(base_a, check_a)
-                          else:
-                              r = r * (1 - check_a) + 255 * check_a
-                              g = g * (1 - check_a) + 255 * check_a
-                              b = b * (1 - check_a) + 255 * check_a
+                          p1x, p1y = cx - size * 0.125 * scale, cy + size * 0.015 * scale
+                          p2x, p2y = cx - size * 0.02 * scale, cy + size * 0.12 * scale
+                          p3x, p3y = cx + size * 0.145 * scale, cy - size * 0.095 * scale
+
+                          ds_check = min(dist_seg(x, y - size*0.02*scale, p1x, p1y, p2x, p2y),
+                                         dist_seg(x, y - size*0.02*scale, p2x, p2y, p3x, p3y))
+                          chk_sh = (1.0 - smoothstep(stroke_w - 0.5, stroke_w + 3.5, ds_check)) * 0.25
+                          if chk_sh > 0 and base_a > 0:
+                              r *= (1.0 - chk_sh)
+                              g *= (1.0 - chk_sh)
+                              b *= (1.0 - chk_sh)
+
+                          d_check = min(dist_seg(x, y, p1x, p1y, p2x, p2y), dist_seg(x, y, p2x, p2y, p3x, p3y))
+                          check_a = 1.0 - smoothstep(stroke_w - 1.2, stroke_w + 1.0, d_check)
+                          if check_a > 0:
+                              tube_z = math.sqrt(max(0.0, 1.0 - (min(1.0, d_check / stroke_w)) ** 2))
+                              cr, cg, cb = 242 + 13 * tube_z, 248 + 7 * tube_z, 255
+                              r = r * (1 - check_a) + cr * check_a
+                              g = g * (1 - check_a) + cg * check_a
+                              b = b * (1 - check_a) + cb * check_a
+                              if mode == "foreground":
+                                  base_a = max(base_a, check_a)
+
+                          sx, sy = cx + size * 0.22 * scale, cy - size * 0.22 * scale
+                          star_r = math.hypot(x - sx, y - sy)
+                          if star_r < size * 0.08 * scale:
+                              ax_d = min(abs(x - sx), abs(y - sy))
+                              star_a = max(0.0, 1.0 - ax_d / (size * 0.018 * scale)) * max(0.0, 1.0 - star_r / (size * 0.075 * scale))
+                              if star_a > 0:
+                                  r = r * (1 - star_a) + 255 * star_a
+                                  g = g * (1 - star_a) + 245 * star_a
+                                  b = b * (1 - star_a) + 150 * star_a
+                                  if mode == "foreground":
+                                      base_a = max(base_a, star_a)
 
                       idx = (y * size + x) * 4
                       pixels[idx] = min(255, max(0, int(r)))
@@ -152,16 +230,17 @@ jobs:
           for folder, px in densities.items():
               d = res / folder
               d.mkdir(parents=True, exist_ok=True)
-              (d / "ic_launcher.png").write_bytes(make_png(px, "squircle"))
-              (d / "ic_launcher_round.png").write_bytes(make_png(px, "round"))
-              (d / "ic_launcher_fg.png").write_bytes(make_png(int(px * 1.5), "foreground"))
+              (d / "ic_launcher.png").write_bytes(make_jelly_icon(px, "squircle"))
+              (d / "ic_launcher_round.png").write_bytes(make_jelly_icon(px, "round"))
+              (d / "ic_launcher_bg.png").write_bytes(make_jelly_icon(int(px * 1.5), "background"))
+              (d / "ic_launcher_fg.png").write_bytes(make_jelly_icon(int(px * 1.5), "foreground"))
 
           anydpi = res / "mipmap-anydpi-v26"
           anydpi.mkdir(parents=True, exist_ok=True)
           adaptive_xml = (
               '<?xml version="1.0" encoding="utf-8"?>\n'
               '<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">\n'
-              '    <background android:drawable="@color/ic_launcher_bg" />\n'
+              '    <background android:drawable="@mipmap/ic_launcher_bg" />\n'
               '    <foreground android:drawable="@mipmap/ic_launcher_fg" />\n'
               '</adaptive-icon>\n'
           )
@@ -170,16 +249,15 @@ jobs:
 
           vals = res / "values"
           vals.mkdir(parents=True, exist_ok=True)
-          strings_xml = (
+          (vals / "strings.xml").write_text(
               '<?xml version="1.0" encoding="utf-8"?>\n'
               '<resources>\n'
               f'    <string name="app_name">{APP_NAME}</string>\n'
-              '    <color name="ic_launcher_bg">#111827</color>\n'
-              '</resources>\n'
+              '</resources>\n',
+              encoding="utf-8"
           )
-          (vals / "strings.xml").write_text(strings_xml, encoding="utf-8")
 
-          manifest_xml = (
+          pathlib.Path("app/src/main/AndroidManifest.xml").write_text(
               '<?xml version="1.0" encoding="utf-8"?>\n'
               '<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n'
               '    <application\n'
@@ -200,11 +278,13 @@ jobs:
               '            </intent-filter>\n'
               '        </activity>\n'
               '    </application>\n'
-              '</manifest>\n'
+              '</manifest>\n',
+              encoding="utf-8"
           )
-          pathlib.Path("app/src/main/AndroidManifest.xml").write_text(manifest_xml, encoding="utf-8")
 
-          java_code = (
+          java_dir = pathlib.Path("app/src/main/java/com/qqsui/pulsehabit")
+          java_dir.mkdir(parents=True, exist_ok=True)
+          (java_dir / "MainActivity.java").write_text(
               'package com.qqsui.pulsehabit;\n\n'
               'import android.annotation.SuppressLint;\n'
               'import android.app.Activity;\n'
@@ -245,9 +325,9 @@ jobs:
               '            super.onBackPressed();\n'
               '        }\n'
               '    }\n'
-              '}\n'
+              '}\n',
+              encoding="utf-8"
           )
-          pathlib.Path("app/src/main/java/com/qqsui/pulsehabit/MainActivity.java").write_text(java_code, encoding="utf-8")
           PYEOF
 
           gradle assembleDebug --stacktrace
