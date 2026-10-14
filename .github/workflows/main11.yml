@@ -34,52 +34,716 @@ jobs:
           cd "$(dirname "$PROJECT_FILE")"
 
           echo "android.useAndroidX=true" > gradle.properties
+          mkdir -p app/src/main/assets
+
+          cat << 'HTMLEOF' > app/src/main/assets/index.html
+          <!DOCTYPE html>
+          <html lang="zh-CN" data-theme="dark">
+          <head>
+            <meta charset="UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+            <title>脉冲习惯</title>
+            <style>
+              :root {
+                --bg-primary: #0b0f19; --bg-card: #161f33; --bg-elevated: #1f2a44;
+                --border-subtle: rgba(148, 163, 184, 0.15); --text-primary: #f8fafc;
+                --text-secondary: #94a3b8; --accent-cyan: #38bdf8; --accent-indigo: #6366f1;
+                --accent-emerald: #10b981; --accent-amber: #f59e0b; --accent-rose: #f43f5e;
+                --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+              }
+              html[data-theme="light"] {
+                --bg-primary: #f0f4f8; --bg-card: #ffffff; --bg-elevated: #f1f5f9;
+                --border-subtle: rgba(15, 23, 42, 0.1); --text-primary: #0f172a; --text-secondary: #475569;
+              }
+              * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+              body {
+                background: var(--bg-primary); color: var(--text-primary);
+                font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+                min-height: 100vh; padding-bottom: 88px; user-select: none; overflow-x: hidden;
+                transition: background 0.3s, color 0.3s;
+              }
+              @keyframes jellyBounce {
+                0% { transform: scale(1, 1); }
+                25% { transform: scale(1.26, 0.78); }
+                45% { transform: scale(0.84, 1.16); }
+                65% { transform: scale(1.09, 0.93); }
+                82% { transform: scale(0.97, 1.03); }
+                100% { transform: scale(1, 1); }
+              }
+              @keyframes jellyPopIn {
+                0% { opacity: 0; transform: scale(0.75) translateY(16px); }
+                65% { opacity: 1; transform: scale(1.04) translateY(-2px); }
+                100% { opacity: 1; transform: scale(1) translateY(0); }
+              }
+              .anim-jelly { animation: jellyBounce 0.52s ease forwards !important; }
+              .app-shell { max-width: 680px; margin: 0 auto; padding: 14px; display: flex; flex-direction: column; gap: 13px; }
+              .app-header {
+                display: flex; justify-content: space-between; align-items: center;
+                background: var(--bg-card); border: 1px solid var(--border-subtle);
+                border-radius: 20px; padding: 12px 15px;
+                box-shadow: 0 8px 22px -6px rgba(0,0,0,0.35), inset 0 1px 1px rgba(255,255,255,0.08);
+              }
+              .brand { display: flex; align-items: center; gap: 11px; }
+              .brand-icon {
+                width: 40px; height: 40px; border-radius: 13px;
+                background: radial-gradient(circle at 30% 25%, #6ee7b7, #10b981 55%, #0284c7 100%);
+                display: flex; align-items: center; justify-content: center; font-size: 20px; color: #fff; font-weight: 900;
+                box-shadow: 0 5px 14px rgba(16,185,129,0.4), inset 0 3px 4px rgba(255,255,255,0.55); cursor: pointer;
+              }
+              .brand h1 { font-size: 16px; font-weight: 800; }
+              .brand p { font-size: 11.5px; color: var(--text-secondary); }
+              .jelly-btn {
+                height: 36px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--border-subtle);
+                background: var(--bg-elevated); color: var(--text-primary); font-size: 12.5px; font-weight: 700;
+                display: inline-flex; align-items: center; justify-content: center; gap: 4px; cursor: pointer;
+                transition: transform 0.28s var(--spring);
+              }
+              .jelly-btn:active { transform: scale(0.84); }
+              .jelly-btn.primary {
+                background: linear-gradient(135deg, #6366f1, #38bdf8); border: none; color: #fff;
+                box-shadow: 0 4px 12px rgba(56,189,248,0.35), inset 0 2px 3px rgba(255,255,255,0.4);
+              }
+              .kpi-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+              .kpi-mini {
+                background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px;
+                padding: 11px 12px; display: flex; flex-direction: column; gap: 3px;
+                transition: transform 0.28s var(--spring);
+              }
+              .kpi-mini:active { transform: scale(0.94); }
+              .kpi-mini-label { font-size: 11px; color: var(--text-secondary); font-weight: 600; }
+              .kpi-mini-val { font-size: 20px; font-weight: 800; font-family: monospace; }
+              .kpi-mini-sub { font-size: 10.5px; color: var(--accent-cyan); font-weight: 600; }
+              .week-strip-card { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 20px; padding: 12px; }
+              .week-nav-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 9px; font-size: 12.5px; font-weight: 700; }
+              .day-strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+              .day-pill {
+                display: flex; flex-direction: column; align-items: center; padding: 7px 2px;
+                border-radius: 12px; background: var(--bg-elevated); border: 1.5px solid transparent;
+                cursor: pointer; gap: 2px; transition: transform 0.3s var(--spring), background 0.2s;
+              }
+              .day-pill:active { transform: scale(0.82); }
+              .day-pill.is-today { border-color: rgba(56,189,248,0.5); }
+              .day-pill.selected {
+                background: linear-gradient(145deg, var(--accent-indigo), var(--accent-cyan)); color: #fff;
+                transform: translateY(-2px) scale(1.04); box-shadow: 0 5px 12px rgba(56,189,248,0.35);
+              }
+              .day-pill .wname { font-size: 10px; opacity: 0.88; font-weight: 600; }
+              .day-pill .dnum { font-size: 13px; font-weight: 800; font-family: monospace; }
+              .day-pill .dot { width: 5px; height: 5px; border-radius: 50%; background: #10b981; }
+              .tab-view { display: none; flex-direction: column; gap: 11px; }
+              .tab-view.active { display: flex; }
+              .habit-card {
+                background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 20px;
+                padding: 14px; display: flex; flex-direction: column; gap: 10px;
+                box-shadow: 0 8px 20px -8px rgba(0,0,0,0.32), inset 0 1px 1px rgba(255,255,255,0.06);
+                animation: jellyPopIn 0.4s var(--spring) backwards;
+              }
+              .habit-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+              .habit-title-group { display: flex; align-items: flex-start; gap: 10px; flex: 1; min-width: 0; }
+              .color-pill { width: 9px; height: 40px; border-radius: 99px; flex-shrink: 0; box-shadow: inset 0 2px 3px rgba(255,255,255,0.4); }
+              .habit-title { font-size: 14.5px; font-weight: 800; word-break: break-word; }
+              .habit-sub { font-size: 11.5px; color: var(--text-secondary); display: flex; flex-wrap: wrap; gap: 7px; margin-top: 3px; }
+              .big-check-btn {
+                min-width: 84px; height: 40px; padding: 0 12px; border-radius: 13px;
+                border: 1.5px solid var(--border-subtle); background: var(--bg-elevated); color: var(--text-primary);
+                font-weight: 800; font-size: 12.5px; display: inline-flex; align-items: center; justify-content: center;
+                cursor: pointer; flex-shrink: 0; transition: transform 0.3s var(--spring), background 0.2s;
+                box-shadow: inset 0 2px 3px rgba(255,255,255,0.08);
+              }
+              .big-check-btn:active { transform: scale(0.8); }
+              .big-check-btn.done {
+                color: #fff; border-color: transparent;
+                box-shadow: 0 5px 14px rgba(16,185,129,0.35), inset 0 3px 4px rgba(255,255,255,0.45);
+              }
+              .card-progress-track { width: 100%; height: 6px; background: var(--bg-elevated); border-radius: 99px; overflow: hidden; }
+              .card-progress-fill { height: 100%; border-radius: 99px; transition: width 0.5s var(--spring); }
+              .habit-card-bottom {
+                display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;
+                gap: 8px; padding-top: 8px; border-top: 1px solid var(--border-subtle);
+              }
+              .mini-week-dots { display: flex; gap: 4px; }
+              .mini-day-btn {
+                width: 27px; height: 27px; border-radius: 8px; border: 1px solid var(--border-subtle);
+                background: var(--bg-elevated); color: var(--text-secondary); font-size: 10px; font-weight: 800;
+                display: flex; align-items: center; justify-content: center; cursor: pointer;
+                transition: transform 0.28s var(--spring);
+              }
+              .mini-day-btn:active { transform: scale(0.76); }
+              .mini-day-btn.done { color: #fff; border-color: transparent; box-shadow: inset 0 2px 2px rgba(255,255,255,0.35); }
+              .card-tools-right { display: flex; align-items: center; gap: 5px; }
+              .step-circle {
+                width: 27px; height: 27px; border-radius: 8px; border: 1px solid var(--border-subtle);
+                background: var(--bg-elevated); color: var(--text-primary); font-weight: 800; cursor: pointer;
+                transition: transform 0.25s var(--spring);
+              }
+              .step-circle:active { transform: scale(0.75); }
+              .action-pill-btn {
+                height: 27px; padding: 0 8px; border-radius: 8px; border: 1px solid var(--border-subtle);
+                background: var(--bg-elevated); color: var(--text-secondary); font-size: 11px; font-weight: 700;
+                cursor: pointer; transition: transform 0.25s var(--spring);
+              }
+              .action-pill-btn:active { transform: scale(0.82); }
+              .action-pill-btn.del { color: var(--accent-rose); border-color: rgba(244,63,94,0.3); }
+              .section-card {
+                background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 20px; padding: 15px;
+                animation: jellyPopIn 0.4s var(--spring) backwards;
+              }
+              .section-card h2 { font-size: 14.5px; font-weight: 800; margin-bottom: 4px; }
+              .section-card p { font-size: 11.5px; color: var(--text-secondary); margin-bottom: 10px; }
+              .streak-item { margin-bottom: 11px; }
+              .streak-row-top { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; font-weight: 700; }
+              .streak-track { height: 9px; background: var(--bg-elevated); border-radius: 99px; position: relative; overflow: hidden; }
+              .streak-fill { height: 100%; border-radius: 99px; transition: width 0.55s var(--spring); }
+              .heatmap-28 { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+              .heat-box {
+                aspect-ratio: 1; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+                font-size: 11px; font-family: monospace; font-weight: 700; border: 1px solid var(--border-subtle);
+                cursor: pointer; transition: transform 0.25s var(--spring);
+              }
+              .heat-box:active { transform: scale(0.8); }
+              .bottom-nav {
+                position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-card);
+                border-top: 1px solid var(--border-subtle); padding: 8px 12px; display: flex;
+                justify-content: space-around; z-index: 900;
+              }
+              .nav-item {
+                background: none; border: none; color: var(--text-secondary); display: flex;
+                flex-direction: column; align-items: center; gap: 2px; font-size: 11px; font-weight: 700;
+                cursor: pointer; padding: 5px 14px; border-radius: 13px; transition: transform 0.3s var(--spring);
+              }
+              .nav-item:active { transform: scale(0.82); }
+              .nav-item.active { color: var(--accent-cyan); background: rgba(56,189,248,0.14); transform: translateY(-2px); }
+              .modal {
+                position: fixed; inset: 0; background: rgba(2,6,23,0.72); display: none;
+                align-items: center; justify-content: center; padding: 16px; z-index: 1000;
+              }
+              .modal.open { display: flex; }
+              .modal-box {
+                background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 22px;
+                width: 100%; max-width: 400px; padding: 20px; display: flex; flex-direction: column; gap: 12px;
+                animation: jellyPopIn 0.35s var(--spring);
+              }
+              .form-label { font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px; display: block; }
+              .input-field {
+                width: 100%; padding: 9px 11px; border-radius: 10px; border: 1px solid var(--border-subtle);
+                background: var(--bg-elevated); color: var(--text-primary); font-size: 14px;
+              }
+              .swatch-row { display: flex; gap: 10px; margin-top: 4px; }
+              .swatch-dot {
+                width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 2.5px solid transparent;
+                transition: transform 0.25s var(--spring);
+              }
+              .swatch-dot.selected { transform: scale(1.2); border-color: #fff; }
+              .toast-bar {
+                position: fixed; bottom: 78px; left: 50%; transform: translateX(-50%) translateY(20px) scale(0.9);
+                background: var(--bg-elevated); border: 1px solid var(--accent-cyan); color: var(--text-primary);
+                padding: 9px 15px; border-radius: 99px; font-size: 12.5px; font-weight: 700;
+                display: flex; align-items: center; gap: 10px; opacity: 0; pointer-events: none;
+                transition: all 0.32s var(--spring); z-index: 1100; white-space: nowrap;
+              }
+              .toast-bar.show { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0) scale(1); }
+              .undo-btn {
+                background: var(--accent-cyan); color: #0b0f19; border: none; padding: 3px 9px;
+                border-radius: 99px; font-size: 11.5px; font-weight: 800; cursor: pointer;
+              }
+              .burst-particle { position: fixed; width: 8px; height: 8px; border-radius: 50%; pointer-events: none; z-index: 2000; }
+            </style>
+          </head>
+          <body>
+            <div class="app-shell">
+              <header class="app-header">
+                <div class="brand">
+                  <div class="brand-icon" id="logoBounce">✓</div>
+                  <div>
+                    <h1>脉冲习惯 PulseHabit</h1>
+                    <p id="selectedDateBanner">2026-10-14 · 周三</p>
+                  </div>
+                </div>
+                <div style="display:flex;gap:7px;">
+                  <button class="jelly-btn" id="themeBtn">🌗</button>
+                  <button class="jelly-btn primary" id="addBtn">＋ 新增模块</button>
+                </div>
+              </header>
+
+              <section class="kpi-strip">
+                <div class="kpi-mini">
+                  <span class="kpi-mini-label">当日达成率</span>
+                  <span class="kpi-mini-val" id="mTodayRate">0%</span>
+                  <span class="kpi-mini-sub" id="mTodaySub">0/0 项</span>
+                </div>
+                <div class="kpi-mini">
+                  <span class="kpi-mini-label">本周累计打卡</span>
+                  <span class="kpi-mini-val" id="mWeekCount">0</span>
+                  <span class="kpi-mini-sub" id="mWeekSub">周目标 0%</span>
+                </div>
+                <div class="kpi-mini">
+                  <span class="kpi-mini-label">最长连续打卡</span>
+                  <span class="kpi-mini-val" id="mBestStreak" style="color:var(--accent-amber);">🔥 0天</span>
+                  <span class="kpi-mini-sub" id="mBestHabit">-</span>
+                </div>
+              </section>
+
+              <section class="week-strip-card">
+                <div class="week-nav-top">
+                  <button class="jelly-btn" style="height:28px;padding:0 9px;" id="mPrevWeek">◀ 上周</button>
+                  <span id="mWeekLabel">2026-10-12 ~ 10-18</span>
+                  <button class="jelly-btn" style="height:28px;padding:0 9px;" id="mNextWeek">下周 ▶</button>
+                </div>
+                <div class="day-strip" id="mDayStrip"></div>
+              </section>
+
+              <div class="tab-view active" id="tabCheckin">
+                <div id="mHabitList" style="display:flex;flex-direction:column;gap:11px;"></div>
+                <div class="section-card">
+                  <h2>💡 当日复盘手记</h2>
+                  <textarea id="mReflection" class="input-field" style="min-height:72px;margin-top:6px;" placeholder="记录今日习惯完成情况或心得..."></textarea>
+                </div>
+              </div>
+
+              <div class="tab-view" id="tabCharts">
+                <div class="section-card">
+                  <h2>📊 本周每日打卡趋势图</h2>
+                  <p>柱高与折线展示周一至周日每日达成率</p>
+                  <div id="mTrendSvg" style="width:100%;height:190px;"></div>
+                </div>
+                <div class="section-card">
+                  <h2>🔥 连续打卡天数排行 (当前 vs 最佳)</h2>
+                  <p>实心条为当前连续天数，浅色底条为历史最高纪录</p>
+                  <div id="mStreakList"></div>
+                </div>
+                <div class="section-card">
+                  <h2>🟩 近 28 天打卡热力图</h2>
+                  <p>点击任意日期方块可切换至对应日期</p>
+                  <div class="heatmap-28" id="mHeatmap"></div>
+                </div>
+              </div>
+
+              <div class="tab-view" id="tabManage">
+                <div class="section-card">
+                  <h2>⚙️ 打卡模块批量管理</h2>
+                  <p>除了在首页每张卡片右下角点击「✎ 编辑」或「🗑 删除」，你也可以在这里批量操作：</p>
+                  <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">
+                    <button class="jelly-btn primary" style="height:42px;width:100%;" id="mAddFromManage">＋ 新增自定义打卡模块</button>
+                    <button class="jelly-btn" style="height:42px;width:100%;color:var(--accent-rose);" id="mClearAllBtn">🗑 一键清空所有现有模块（从零创建）</button>
+                    <button class="jelly-btn" style="height:42px;width:100%;" id="mRestoreDefaultBtn">↺ 恢复初始示例打卡模块</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <nav class="bottom-nav">
+              <button class="nav-item active" data-tab="tabCheckin"><span>☑️</span><span>每日打卡</span></button>
+              <button class="nav-item" data-tab="tabCharts"><span>📈</span><span>连续图表</span></button>
+              <button class="nav-item" id="mTodayJump"><span>🎯</span><span>回到今天</span></button>
+              <button class="nav-item" data-tab="tabManage"><span>⚙️</span><span>模块管理</span></button>
+            </nav>
+
+            <div class="modal" id="mModal">
+              <div class="modal-box">
+                <h3 style="font-size:16px;font-weight:800;" id="mModalTitle">新增打卡模块</h3>
+                <input type="hidden" id="mEditId" value="" />
+                <div>
+                  <span class="form-label">习惯/目标名称 *</span>
+                  <input type="text" id="mName" class="input-field" placeholder="例如：晨跑 30 分钟 / 读书 1 章" />
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                  <div>
+                    <span class="form-label">每日目标数值</span>
+                    <input type="number" id="mTarget" class="input-field" value="1" min="1" />
+                  </div>
+                  <div>
+                    <span class="form-label">单位 (次/分钟/篇)</span>
+                    <input type="text" id="mUnit" class="input-field" value="次" />
+                  </div>
+                </div>
+                <div>
+                  <span class="form-label">每周目标天数 (1~7)</span>
+                  <input type="number" id="mFreq" class="input-field" value="5" min="1" max="7" />
+                </div>
+                <div>
+                  <span class="form-label">Q弹糖果主题色</span>
+                  <div class="swatch-row" id="mSwatchRow">
+                    <div class="swatch-dot selected" data-color="#10b981" style="background:#10b981;"></div>
+                    <div class="swatch-dot" data-color="#38bdf8" style="background:#38bdf8;"></div>
+                    <div class="swatch-dot" data-color="#6366f1" style="background:#6366f1;"></div>
+                    <div class="swatch-dot" data-color="#a855f7" style="background:#a855f7;"></div>
+                    <div class="swatch-dot" data-color="#f59e0b" style="background:#f59e0b;"></div>
+                    <div class="swatch-dot" data-color="#f43f5e" style="background:#f43f5e;"></div>
+                  </div>
+                </div>
+                <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px;">
+                  <button class="jelly-btn" id="mCancel">取消</button>
+                  <button class="jelly-btn primary" id="mSave">保存模块</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="toast-bar" id="toastBar">
+              <span id="toastText">已操作</span>
+              <button class="undo-btn" id="undoBtn" style="display:none;">撤销删除</button>
+            </div>
+
+            <script>
+              const ANCHOR_TODAY = "2026-10-14";
+              const STORAGE_KEY = "pulse_habit_dashboard_v2";
+              const WNAMES = ["一", "二", "三", "四", "五", "六", "日"];
+
+              function parseDate(s) { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); }
+              function fmtDate(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; }
+              function addDays(s, n) { const d = parseDate(s); d.setDate(d.getDate() + n); return fmtDate(d); }
+              function getMonday(s) { const d = parseDate(s); const day = d.getDay(); d.setDate(d.getDate() + (day === 0 ? -6 : 1 - day)); return fmtDate(d); }
+
+              function defaultState() {
+                const habits = [
+                  { id: "h1", name: "LLM 推理与代码实验", targetValue: 60, unit: "分钟", weeklyGoal: 6, color: "#38bdf8" },
+                  { id: "h2", name: "光学传感文献精读", targetValue: 1, unit: "篇", weeklyGoal: 5, color: "#6366f1" },
+                  { id: "h3", name: "数学推导与算法手稿", targetValue: 45, unit: "分钟", weeklyGoal: 5, color: "#a855f7" },
+                  { id: "h4", name: "有氧慢跑与核心训练", targetValue: 30, unit: "分钟", weeklyGoal: 5, color: "#10b981" },
+                  { id: "h5", name: "深度无干扰专注区块", targetValue: 2, unit: "小时", weeklyGoal: 6, color: "#f59e0b" },
+                  { id: "h6", name: "晚间技术复盘与早睡", targetValue: 1, unit: "次", weeklyGoal: 7, color: "#f43f5e" }
+                ];
+                const patterns = {
+                  h1: [1,1,1,0,1,1,1, 1,1,1,1,0,1,1, 1,1,0,1,1,1,1, 1,1,1],
+                  h2: [1,1,0,1,1,0,0, 1,1,1,0,1,1,0, 1,0,1,1,1,0,1, 1,1,1],
+                  h3: [0,1,1,1,0,1,0, 1,0,1,1,1,0,0, 1,1,1,0,1,1,0, 1,1,0],
+                  h4: [1,0,1,1,0,1,1, 0,1,1,0,1,1,1, 1,0,1,1,0,1,1, 1,0,1],
+                  h5: [1,1,1,1,1,0,0, 1,1,1,1,1,1,0, 1,1,1,1,1,1,1, 1,1,1],
+                  h6: [1,1,1,1,1,1,0, 1,1,1,1,1,0,1, 1,1,1,1,1,1,1, 1,1,1]
+                };
+                const logs = {};
+                const start = addDays(ANCHOR_TODAY, -23);
+                habits.forEach(h => {
+                  logs[h.id] = {};
+                  (patterns[h.id] || []).forEach((v, i) => { if (v) logs[h.id][addDays(start, i)] = h.targetValue; });
+                });
+                return { habits, logs, reflections: { "2026-10-14": "点击每张卡片右下角的「✎ 编辑」或「🗑 删除」即可自由修改或删掉任意模块！" } };
+              }
+
+              let state = (() => {
+                try {
+                  const s = JSON.parse(localStorage.getItem(STORAGE_KEY));
+                  if (s && Array.isArray(s.habits) && s.logs) return s;
+                } catch (e) {}
+                return defaultState();
+              })();
+
+              let curMonday = getMonday(ANCHOR_TODAY);
+              let selDate = ANCHOR_TODAY;
+              let selColor = "#10b981";
+              let lastDeleted = null;
+
+              function save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {} }
+              function haptic(ms = 12) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {} }
+              function triggerJelly(el) { if (!el) return; el.classList.remove("anim-jelly"); void el.offsetWidth; el.classList.add("anim-jelly"); }
+
+              function spawnBurst(x, y, color) {
+                const cols = [color || "#10b981", "#38bdf8", "#f59e0b", "#a855f7", "#f43f5e"];
+                for (let i = 0; i < 10; i++) {
+                  const p = document.createElement("div");
+                  p.className = "burst-particle";
+                  p.style.left = `${x - 4}px`; p.style.top = `${y - 4}px`;
+                  p.style.background = cols[i % cols.length];
+                  document.body.appendChild(p);
+                  const a = (Math.PI * 2 * i) / 10;
+                  const dist = 24 + Math.random() * 28;
+                  p.animate([
+                    { transform: "translate(0,0) scale(1.2)", opacity: 1 },
+                    { transform: `translate(${Math.cos(a)*dist}px, ${Math.sin(a)*dist - 8}px) scale(0)`, opacity: 0 }
+                  ], { duration: 440, easing: "cubic-bezier(0.22, 1, 0.36, 1)" }).onfinish = () => p.remove();
+                }
+              }
+
+              function showToast(msg, undo = false) {
+                const bar = document.getElementById("toastBar");
+                document.getElementById("toastText").textContent = msg;
+                document.getElementById("undoBtn").style.display = undo ? "inline-block" : "none";
+                bar.classList.add("show");
+                clearTimeout(window.__tt);
+                window.__tt = setTimeout(() => bar.classList.remove("show"), 4000);
+              }
+
+              document.getElementById("undoBtn").onclick = () => {
+                if (lastDeleted) {
+                  state.habits.splice(lastDeleted.idx, 0, lastDeleted.h);
+                  state.logs[lastDeleted.h.id] = lastDeleted.logs;
+                  lastDeleted = null; save(); render();
+                  showToast("已恢复模块 ✨", false);
+                }
+              };
+
+              function getVal(h, d) { return (state.logs[h.id] && state.logs[h.id][d]) || 0; }
+              function isDone(h, d) { return getVal(h, d) >= h.targetValue; }
+
+              function getStreak(h) {
+                let cur = 0, c = ANCHOR_TODAY;
+                if (!isDone(h, c)) c = addDays(c, -1);
+                while (isDone(h, c) && cur < 365) { cur++; c = addDays(c, -1); }
+                const dates = Object.keys(state.logs[h.id] || {}).filter(d => isDone(h, d)).sort();
+                let best = cur, run = 0, prev = null;
+                dates.forEach(d => { run = (!prev || addDays(prev, 1) === d) ? run + 1 : 1; if (run > best) best = run; prev = d; });
+                return { cur, best };
+              }
+
+              function render() {
+                const wDates = Array.from({ length: 7 }, (_, i) => addDays(curMonday, i));
+                document.getElementById("mWeekLabel").textContent = `${wDates[0]} ~ ${wDates[6].slice(5)}`;
+                const dIdx = (parseDate(selDate).getDay() + 6) % 7;
+                document.getElementById("selectedDateBanner").textContent = `${selDate} · 周${WNAMES[dIdx]}${selDate === ANCHOR_TODAY ? " (今天)" : ""}`;
+
+                const total = state.habits.length;
+                const doneToday = state.habits.filter(h => isDone(h, selDate)).length;
+                document.getElementById("mTodayRate").textContent = `${total > 0 ? Math.round((doneToday / total) * 100) : 0}%`;
+                document.getElementById("mTodaySub").textContent = `已完成 ${doneToday}/${total} 项`;
+
+                let wDone = 0, wGoal = 0, bestS = 0, bestH = "暂无";
+                state.habits.forEach(h => {
+                  wGoal += h.weeklyGoal;
+                  wDone += wDates.filter(d => isDone(h, d)).length;
+                  const { cur } = getStreak(h);
+                  if (cur > bestS) { bestS = cur; bestH = h.name.slice(0, 6); }
+                });
+                document.getElementById("mWeekCount").textContent = `${wDone}/${wGoal}`;
+                document.getElementById("mWeekSub").textContent = `周达成 ${wGoal > 0 ? Math.round((wDone / wGoal) * 100) : 0}%`;
+                document.getElementById("mBestStreak").textContent = `🔥 ${bestS}天`;
+                document.getElementById("mBestHabit").textContent = bestH;
+
+                const strip = document.getElementById("mDayStrip");
+                strip.innerHTML = wDates.map((d, i) => {
+                  const allDone = total > 0 && state.habits.every(h => isDone(h, d));
+                  return `<div class="day-pill ${d === ANCHOR_TODAY ? "is-today" : ""} ${d === selDate ? "selected" : ""}" data-d="${d}">
+                    <span class="wname">周${WNAMES[i]}</span><span class="dnum">${d.slice(8)}</span>
+                    <span class="dot" style="opacity:${allDone ? 1 : 0}"></span></div>`;
+                }).join("");
+                strip.querySelectorAll(".day-pill").forEach(el => { el.onclick = () => { haptic(8); selDate = el.dataset.d; render(); }; });
+
+                const list = document.getElementById("mHabitList");
+                if (total === 0) {
+                  list.innerHTML = `<div class="section-card" style="text-align:center;padding:26px;"><h2>暂无打卡模块</h2><p>点击右上角「＋ 新增模块」创建你的专属目标</p></div>`;
+                } else {
+                  list.innerHTML = state.habits.map(h => {
+                    const val = getVal(h, selDate);
+                    const done = isDone(h, selDate);
+                    const pct = Math.min(100, Math.round((val / h.targetValue) * 100));
+                    const { cur } = getStreak(h);
+                    const wCount = wDates.filter(d => isDone(h, d)).length;
+                    const step = h.targetValue >= 30 ? 15 : 1;
+                    return `<div class="habit-card">
+                      <div class="habit-card-top">
+                        <div class="habit-title-group">
+                          <div class="color-pill" style="background:${h.color}"></div>
+                          <div>
+                            <div class="habit-title">${h.name}</div>
+                            <div class="habit-sub">
+                              <span style="color:var(--accent-amber);font-weight:700;">🔥 连续 ${cur} 天</span>
+                              <span>· 本周 ${wCount}/${h.weeklyGoal}天</span>
+                              <span>· 今日 ${val}/${h.targetValue}${h.unit}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <button class="big-check-btn ${done ? "done" : ""}" style="${done ? `background:${h.color}` : ""}" data-toggle="${h.id}">
+                          ${done ? "✓ 已完成" : "○ 打卡"}
+                        </button>
+                      </div>
+                      <div class="card-progress-track"><div class="card-progress-fill" style="width:${pct}%;background:${h.color}"></div></div>
+                      <div class="habit-card-bottom">
+                        <div class="mini-week-dots">
+                          ${wDates.map((d, di) => {
+                            const wd = isDone(h, d);
+                            return `<button class="mini-day-btn ${wd ? "done" : ""}" style="${wd ? `background:${h.color}` : ""}" data-h="${h.id}" data-d="${d}">${WNAMES[di]}</button>`;
+                          }).join("")}
+                        </div>
+                        <div class="card-tools-right">
+                          <button class="step-circle" data-step="${h.id}" data-delta="${-step}">-</button>
+                          <button class="step-circle" data-step="${h.id}" data-delta="${step}">+</button>
+                          <button class="action-pill-btn" data-edit="${h.id}">✎ 编辑</button>
+                          <button class="action-pill-btn del" data-del="${h.id}">🗑 删除</button>
+                        </div>
+                      </div>
+                    </div>`;
+                  }).join("");
+                }
+
+                list.querySelectorAll("[data-toggle]").forEach(b => {
+                  b.onclick = () => {
+                    const h = state.habits.find(x => x.id === b.dataset.toggle);
+                    if (!state.logs[h.id]) state.logs[h.id] = {};
+                    if (isDone(h, selDate)) { delete state.logs[h.id][selDate]; haptic(10); }
+                    else {
+                      state.logs[h.id][selDate] = h.targetValue; haptic(20);
+                      const r = b.getBoundingClientRect(); spawnBurst(r.left + r.width/2, r.top + r.height/2, h.color);
+                    }
+                    save(); render();
+                    triggerJelly(list.querySelector(`[data-toggle="${h.id}"]`));
+                  };
+                });
+
+                list.querySelectorAll("[data-h]").forEach(b => {
+                  b.onclick = () => {
+                    const h = state.habits.find(x => x.id === b.dataset.h);
+                    const d = b.dataset.d;
+                    if (!state.logs[h.id]) state.logs[h.id] = {};
+                    if (isDone(h, d)) { delete state.logs[h.id][d]; haptic(8); }
+                    else {
+                      state.logs[h.id][d] = h.targetValue; haptic(15);
+                      const r = b.getBoundingClientRect(); spawnBurst(r.left + r.width/2, r.top + r.height/2, h.color);
+                    }
+                    save(); render();
+                  };
+                });
+
+                list.querySelectorAll("[data-step]").forEach(b => {
+                  b.onclick = () => {
+                    haptic(8);
+                    const h = state.habits.find(x => x.id === b.dataset.step);
+                    if (!state.logs[h.id]) state.logs[h.id] = {};
+                    const next = Math.max(0, getVal(h, selDate) + Number(b.dataset.delta));
+                    if (next === 0) delete state.logs[h.id][selDate]; else state.logs[h.id][selDate] = next;
+                    save(); render();
+                  };
+                });
+
+                list.querySelectorAll("[data-edit]").forEach(b => { b.onclick = () => { haptic(10); openModal(b.dataset.edit); }; });
+                list.querySelectorAll("[data-del]").forEach(b => {
+                  b.onclick = () => {
+                    haptic(18);
+                    const idx = state.habits.findIndex(x => x.id === b.dataset.del);
+                    if (idx === -1) return;
+                    const h = state.habits[idx];
+                    lastDeleted = { idx, h, logs: state.logs[h.id] ? { ...state.logs[h.id] } : {} };
+                    state.habits.splice(idx, 1);
+                    delete state.logs[h.id];
+                    save(); render();
+                    showToast(`已删除「${h.name}」`, true);
+                  };
+                });
+
+                document.getElementById("mReflection").value = (state.reflections && state.reflections[selDate]) || "";
+
+                const safeTotal = Math.max(1, total);
+                const W = 360, H = 175, padL = 28, padR = 14, padT = 18, padB = 28, pW = W - padL - padR, pH = H - padT - padB, stepX = pW / 7;
+                let bars = "", pts = [];
+                wDates.forEach((d, i) => {
+                  const cnt = state.habits.filter(h => isDone(h, d)).length;
+                  const pct = Math.round((cnt / safeTotal) * 100);
+                  const cx = padL + stepX * i + stepX / 2;
+                  const bH = Math.max(4, (pct / 100) * pH), bY = padT + pH - bH;
+                  pts.push({ x: cx, y: bY, cnt });
+                  bars += `<rect x="${cx - 10}" y="${bY}" width="20" height="${bH}" rx="6" fill="${d === selDate ? "#38bdf8" : "#6366f1"}" opacity="0.88"/>`;
+                  bars += `<text x="${cx}" y="${H - 8}" text-anchor="middle" fill="var(--text-secondary)" font-size="10">周${WNAMES[i]}</text>`;
+                });
+                const poly = pts.map(p => `${p.x},${p.y}`).join(" ");
+                const dots = pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="3.5" fill="#10b981"/><text x="${p.x}" y="${p.y - 6}" text-anchor="middle" fill="var(--text-primary)" font-size="9.5">${p.cnt}</text>`).join("");
+                document.getElementById("mTrendSvg").innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%">${bars}<polyline fill="none" stroke="#38bdf8" stroke-width="2" points="${poly}"/>${dots}</svg>`;
+
+                const sData = state.habits.map(h => ({ ...h, ...getStreak(h) }));
+                const maxB = Math.max(14, ...sData.map(x => x.best));
+                document.getElementById("mStreakList").innerHTML = sData.map(h => `<div class="streak-item">
+                  <div class="streak-row-top"><span>${h.name}</span><span style="color:${h.color}">当前 ${h.cur}天 / 最佳 ${h.best}天</span></div>
+                  <div class="streak-track">
+                    <div class="streak-fill" style="width:${Math.round((h.best / maxB) * 100)}%;background:${h.color};opacity:0.25;position:absolute;top:0;left:0;"></div>
+                    <div class="streak-fill" style="width:${Math.round((h.cur / maxB) * 100)}%;background:${h.color};position:absolute;top:0;left:0;"></div>
+                  </div></div>`).join("");
+
+                const start28 = addDays(addDays(curMonday, 6), -27);
+                let hCells = "";
+                for (let i = 0; i < 28; i++) {
+                  const d = addDays(start28, i);
+                  const ratio = state.habits.filter(h => isDone(h, d)).length / safeTotal;
+                  const bg = ratio === 0 ? "rgba(148,163,184,0.12)" : ratio < 0.5 ? "rgba(16,185,129,0.35)" : ratio < 1 ? "rgba(16,185,129,0.68)" : "rgba(16,185,129,0.96)";
+                  hCells += `<div class="heat-box" data-hd="${d}" style="background:${bg};color:${ratio >= 0.5 ? "#fff" : "var(--text-secondary)"};${d === selDate ? "outline:2px solid #38bdf8" : ""}">${d.slice(8)}</div>`;
+                }
+                const hm = document.getElementById("mHeatmap");
+                hm.innerHTML = hCells;
+                hm.querySelectorAll("[data-hd]").forEach(c => { c.onclick = () => { selDate = c.dataset.hd; curMonday = getMonday(selDate); render(); }; });
+              }
+
+              function selectSwatch(c) {
+                selColor = c;
+                document.querySelectorAll("#mSwatchRow .swatch-dot").forEach(d => d.classList.toggle("selected", d.dataset.color === c));
+              }
+              document.querySelectorAll("#mSwatchRow .swatch-dot").forEach(d => { d.onclick = () => selectSwatch(d.dataset.color); });
+
+              function openModal(editId = null) {
+                const modal = document.getElementById("mModal");
+                document.getElementById("mEditId").value = editId || "";
+                if (editId) {
+                  const h = state.habits.find(x => x.id === editId);
+                  if (!h) return;
+                  document.getElementById("mModalTitle").textContent = "编辑打卡模块";
+                  document.getElementById("mName").value = h.name;
+                  document.getElementById("mTarget").value = h.targetValue;
+                  document.getElementById("mUnit").value = h.unit;
+                  document.getElementById("mFreq").value = h.weeklyGoal;
+                  selectSwatch(h.color || "#10b981");
+                } else {
+                  document.getElementById("mModalTitle").textContent = "新增打卡模块";
+                  document.getElementById("mName").value = "";
+                  document.getElementById("mTarget").value = 1;
+                  document.getElementById("mUnit").value = "次";
+                  document.getElementById("mFreq").value = 5;
+                  selectSwatch("#10b981");
+                }
+                modal.classList.add("open");
+              }
+
+              document.getElementById("addBtn").onclick = () => openModal(null);
+              document.getElementById("mAddFromManage").onclick = () => openModal(null);
+              document.getElementById("mCancel").onclick = () => document.getElementById("mModal").classList.remove("open");
+              document.getElementById("mSave").onclick = () => {
+                const idVal = document.getElementById("mEditId").value;
+                const name = document.getElementById("mName").value.trim();
+                if (!name) return;
+                const targetValue = Math.max(1, Number(document.getElementById("mTarget").value) || 1);
+                const unit = document.getElementById("mUnit").value.trim() || "次";
+                const weeklyGoal = Math.min(7, Math.max(1, Number(document.getElementById("mFreq").value) || 5));
+                if (idVal) {
+                  const h = state.habits.find(x => x.id === idVal);
+                  if (h) { h.name = name; h.targetValue = targetValue; h.unit = unit; h.weeklyGoal = weeklyGoal; h.color = selColor; }
+                  showToast(`已更新「${name}」`);
+                } else {
+                  const id = "h_" + Date.now();
+                  state.habits.push({ id, name, targetValue, unit, weeklyGoal, color: selColor });
+                  state.logs[id] = {};
+                  showToast(`已新增「${name}」`);
+                }
+                document.getElementById("mModal").classList.remove("open");
+                save(); render();
+              };
+
+              document.getElementById("mPrevWeek").onclick = () => { curMonday = addDays(curMonday, -7); selDate = curMonday; render(); };
+              document.getElementById("mNextWeek").onclick = () => { curMonday = addDays(curMonday, 7); selDate = curMonday; render(); };
+              document.getElementById("mTodayJump").onclick = () => { curMonday = getMonday(ANCHOR_TODAY); selDate = ANCHOR_TODAY; render(); showToast("已回到今天"); };
+              document.getElementById("logoBounce").onclick = e => { triggerJelly(e.currentTarget); };
+              document.getElementById("themeBtn").onclick = () => {
+                const r = document.documentElement;
+                r.setAttribute("data-theme", r.getAttribute("data-theme") === "dark" ? "light" : "dark");
+              };
+              document.getElementById("mReflection").oninput = e => {
+                if (!state.reflections) state.reflections = {};
+                state.reflections[selDate] = e.target.value; save();
+              };
+              document.getElementById("mClearAllBtn").onclick = () => { state.habits = []; state.logs = {}; save(); render(); showToast("已清空所有模块"); };
+              document.getElementById("mRestoreDefaultBtn").onclick = () => { state = defaultState(); save(); render(); showToast("已恢复默认示例模块"); };
+
+              document.querySelectorAll(".bottom-nav [data-tab]").forEach(btn => {
+                btn.onclick = () => {
+                  document.querySelectorAll(".bottom-nav [data-tab]").forEach(b => b.classList.remove("active"));
+                  document.querySelectorAll(".tab-view").forEach(v => v.classList.remove("active"));
+                  btn.classList.add("active");
+                  document.getElementById(btn.dataset.tab).classList.add("active");
+                };
+              });
+
+              render();
+            </script>
+          </body>
+          </html>
+          HTMLEOF
 
           python3 - << 'PYEOF'
-          import base64, math, pathlib, struct, zlib
+          import math, pathlib, struct, zlib
 
           APP_NAME = "脉冲习惯"
-
-          HTML_B64 = """
-              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
-          """
-          assets_dir = pathlib.Path("app/src/main/assets")
-          assets_dir.mkdir(parents=True, exist_ok=True)
-          (assets_dir / "index.html").write_bytes(zlib.decompress(base64.b64decode(HTML_B64)))
 
           def make_jelly_icon(size, mode="squircle"):
               pixels = bytearray(size * size * 4)
